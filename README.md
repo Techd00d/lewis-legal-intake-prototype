@@ -4,6 +4,14 @@ Interactive, schema-driven mockup built from the eight legacy Lewis Legal PDF fo
 
 This is a planning artifact, not a production intake service. It has no database, authentication, email, AI service, MyCase connection, analytics, or file-upload backend. Use synthetic information only. Form answers live only in React memory and disappear when the page is refreshed.
 
+## Public preview
+
+Open the client-safe demonstration at:
+
+**https://techd00d.github.io/lewis-legal-intake-prototype/**
+
+This public build is intentionally marked `noindex` and must only be used with synthetic information.
+
 ## Run locally
 
 From this directory:
@@ -25,6 +33,8 @@ Useful direct prototype links:
 - `http://localhost:3000/?form=privacy-communications`
 - `http://localhost:3000/?form=document-collection`
 - `http://localhost:3000/?form=internal-opening`
+
+Replace `http://localhost:3000/` with the public preview URL above to share a specific form with Heather.
 
 ## Verify and export
 
