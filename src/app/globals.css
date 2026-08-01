@@ -2967,3 +2967,198 @@ body {
     gap: 4px;
   }
 }
+
+/* Accessible, low-clutter field guidance */
+.field-help-guide {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 14px 16px;
+  margin: -8px 0 20px;
+  border: 1px solid #c8dcda;
+  border-radius: 10px;
+  background: #f5faf9;
+  color: var(--teal-dark);
+}
+
+.field-help-guide > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.field-help-guide strong {
+  color: var(--ink);
+  font-size: var(--type-sm);
+}
+
+.field-help-guide p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: var(--type-xs);
+  line-height: 1.55;
+}
+
+.help-guide-desktop {
+  display: none;
+}
+
+.help-guide-touch {
+  display: inline;
+}
+
+.form-field {
+  position: relative;
+}
+
+.form-field:focus-within {
+  z-index: 5;
+}
+
+.field-meta-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.field-help-disclosure {
+  position: relative;
+  z-index: 15;
+  flex: 0 0 auto;
+}
+
+.field-help-disclosure[open] {
+  z-index: 40;
+}
+
+.field-help-disclosure summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border: 1px solid #c5d7d5;
+  border-radius: 999px;
+  background: #f3f8f7;
+  color: var(--teal-dark);
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.field-help-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.field-help-disclosure summary:hover,
+.field-help-disclosure[open] summary {
+  border-color: #8ebdb8;
+  background: #e5f2f0;
+  color: var(--teal);
+}
+
+.field-help-disclosure summary:focus-visible {
+  outline: 3px solid rgba(13, 116, 109, 0.2);
+  outline-offset: 2px;
+}
+
+.field-help-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(340px, calc(100vw - 56px));
+  padding: 12px 14px;
+  border: 1px solid #28454d;
+  border-radius: 9px;
+  background: #15313a;
+  box-shadow: 0 14px 36px rgba(16, 38, 48, 0.22);
+  color: #f4f8f7;
+  font-size: var(--type-sm);
+  font-weight: 520;
+  line-height: 1.52;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+}
+
+.field-help-disclosure[open] .field-help-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.acknowledgment-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: start;
+}
+
+.acknowledgment-layout .acknowledgment-card {
+  min-width: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .help-guide-desktop {
+    display: inline;
+  }
+
+  .help-guide-touch {
+    display: none;
+  }
+
+  .field-help-disclosure:hover .field-help-popover,
+  .field-help-disclosure:focus-within .field-help-popover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .help-guide-desktop {
+    display: none;
+  }
+
+  .help-guide-touch {
+    display: inline;
+  }
+
+  .field-help-guide {
+    margin-top: -6px;
+    padding: 13px 14px;
+  }
+
+  .field-label-row {
+    gap: 9px;
+  }
+
+  .field-meta-actions {
+    gap: 5px;
+  }
+
+  .field-help-disclosure summary {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .field-help-popover {
+    top: calc(100% + 6px);
+    width: min(330px, calc(100vw - 64px));
+    padding: 13px 14px;
+    font-size: 0.95rem;
+  }
+
+  .field-badges {
+    padding-top: 5px;
+  }
+}

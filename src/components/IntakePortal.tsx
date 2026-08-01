@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleAlert,
+  CircleHelp,
   Clock3,
   Database,
   Download,
@@ -71,6 +72,85 @@ const hasValue = (value: FieldValue | undefined) => {
 };
 
 const inputId = (fieldId: string) => fieldId.replaceAll(".", "-");
+
+const getFieldHelp = (field: IntakeField) => {
+  if (field.help) return field.help;
+
+  const plainLabel = field.label.replace(/[?.:]$/, "");
+  const normalizedId = field.id.toLowerCase();
+  const normalizedLabel = plainLabel.toLowerCase();
+  let guidance: string;
+
+  if (normalizedId.endsWith("legal_name")) {
+    guidance = "Enter the full legal name as it appears on current identity or court records, including the middle name if known.";
+  } else if (normalizedId.includes("case_number") && field.type === "text") {
+    guidance = "Copy the case number from a court notice, filed paper, or online docket if available. Keep all letters, spaces, and dashes.";
+  } else if (["text", "textarea"].includes(field.type) && (normalizedLabel.includes("court") || normalizedLabel.includes("county") || normalizedLabel.includes("department"))) {
+    guidance = "Copy the court, county, branch, department, or hearing information from the most recent court paper if available. Staff will verify it before use.";
+  } else if (["text", "textarea"].includes(field.type) && normalizedLabel.includes("address")) {
+    guidance = "Enter the complete address you currently know, including city, state, and ZIP code. Do not investigate another person's address or guess.";
+  } else if (["text", "textarea"].includes(field.type) && (normalizedLabel.includes("attorney") || normalizedLabel.includes("law firm"))) {
+    guidance = "Enter the attorney's or law firm's name exactly as shown on a letter, email, or filed paper, if known.";
+  } else {
+    switch (field.type) {
+      case "date":
+        guidance = `Enter the exact date for “${plainLabel}” if known. If it is only approximate, leave the date blank and explain the estimate in a related notes field.`;
+        break;
+      case "currency":
+        guidance = `Enter the best current dollar amount for “${plainLabel}.” Use a monthly amount unless the field or column says otherwise; an estimate is acceptable at intake.`;
+        break;
+      case "number":
+        guidance = `Enter the best current number for “${plainLabel}.” Use an estimate only when an exact figure is not reasonably available.`;
+        break;
+      case "email":
+        guidance = normalizedLabel.includes("safe") || normalizedLabel.includes("primary")
+          ? "Enter an email address that staff may safely use. Communication restrictions can be added or changed in the privacy-preferences form."
+          : `Enter the email address for “${plainLabel}” only if you already know it; do not investigate or guess.`;
+        break;
+      case "tel":
+        guidance = normalizedLabel.includes("safe") || normalizedLabel.includes("primary")
+          ? "Enter a phone number that staff may safely use, including the area code. Communication restrictions can be added or changed later."
+          : `Enter the phone number for “${plainLabel}” only if you already know it; do not investigate or guess.`;
+        break;
+      case "select":
+        guidance = `Choose the option that most closely matches “${plainLabel}.” Use “Unsure” or “Other” when offered instead of guessing.`;
+        break;
+      case "yesno":
+        guidance = `Choose Yes or No for “${plainLabel}” based on what you currently know. Staff can clarify the answer later.`;
+        break;
+      case "checkboxes":
+        guidance = `Select every option that currently applies to “${plainLabel}.” Leave an option unselected rather than guessing.`;
+        break;
+      case "textarea":
+        guidance = `Give a short, factual answer for “${plainLabel}.” Include names and approximate dates when helpful, but do not guess or offer legal conclusions.`;
+        break;
+      case "table":
+        guidance = `Add one row for each applicable item under “${plainLabel}.” Follow the column headings, use estimates when necessary, and leave unknown cells blank.`;
+        break;
+      case "matrix":
+        guidance = `Use the rows and columns to organize the best current information available for “${plainLabel}.” Estimates are acceptable and staff will verify important figures.`;
+        break;
+      case "upload":
+        guidance = `Choose only records relevant to “${plainLabel}.” In this prototype, filenames remain in browser memory and file contents are not uploaded or transmitted.`;
+        break;
+      case "acknowledgment":
+        guidance = "Read the full statement and check the box only if it accurately reflects your understanding or instruction.";
+        break;
+      case "notice":
+        guidance = "Read this information before continuing to the remaining fields in this section.";
+        break;
+      default:
+        guidance = `Enter the information requested for “${plainLabel}” using the best facts you currently know.`;
+    }
+  }
+
+  const qualifiers: string[] = [];
+  if (field.required) qualifiers.push("This item is required to continue.");
+  if (field.sensitive) qualifiers.push("Treat this as sensitive information and use synthetic data in this public prototype.");
+  if (field.deferred) qualifiers.push("Collection is intentionally deferred until staff provides an authenticated, protected method.");
+
+  return [guidance, ...qualifiers].join(" ");
+};
 
 function LogoMark() {
   return (
@@ -287,7 +367,7 @@ function BlueprintHome({ openForm }: { openForm: (formId: string) => void }) {
       <section className="hero">
         <div className="shell hero-grid">
           <div className="hero-copy">
-            <div className="eyebrow"><ShieldCheck size={16} /> Intake modernization prototype · v0.1</div>
+            <div className="eyebrow"><ShieldCheck size={16} /> Intake modernization prototype · v0.2</div>
             <h1>Less paperwork.<br /><em>More protected time.</em></h1>
             <p className="hero-lede">A secure, staged family-law intake experience built from Lewis Legal&apos;s existing forms—and designed for a supervised future connection to MyCase.</p>
             <div className="hero-actions">
@@ -356,6 +436,38 @@ function FieldBadges({ field }: { field: IntakeField }) {
   );
 }
 
+function FieldHelp({ field, helpId }: { field: IntakeField; helpId: string }) {
+  const helpText = getFieldHelp(field);
+
+  return (
+    <>
+      <span className="sr-only" id={helpId}>{helpText}</span>
+      <details
+        className="field-help-disclosure"
+        onKeyDown={(event) => {
+          if (event.key !== "Escape") return;
+          event.currentTarget.open = false;
+          event.currentTarget.querySelector("summary")?.focus();
+        }}
+      >
+        <summary
+          aria-label={`Helpful information for ${field.label}`}
+          aria-describedby={helpId}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            const disclosure = event.currentTarget.parentElement as HTMLDetailsElement;
+            disclosure.open = !disclosure.open;
+          }}
+        >
+          <CircleHelp size={17} aria-hidden="true" />
+        </summary>
+        <span className="field-help-popover" aria-hidden="true">{helpText}</span>
+      </details>
+    </>
+  );
+}
+
 interface FieldRendererProps {
   field: IntakeField;
   values: IntakeValues;
@@ -369,27 +481,30 @@ interface FieldRendererProps {
 function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invalid, mappingMode }: FieldRendererProps) {
   const id = inputId(field.id);
   const value = values[field.id];
-  const describedBy = field.help ? `${id}-help` : undefined;
+  const describedBy = `${id}-help`;
 
   if (field.type === "notice") {
     return (
       <div className="field-full notice-card">
         <Info size={20} aria-hidden="true" />
-        <div><strong>{field.label}</strong><p>{field.help}</p></div>
+        <div><strong>{field.label}</strong><p>{getFieldHelp(field)}</p></div>
       </div>
     );
   }
 
   const wrapperClass = `form-field ${field.fullWidth || ["table", "matrix", "upload", "checkboxes", "textarea", "acknowledgment"].includes(field.type) ? "field-full" : ""} ${invalid ? "field-invalid" : ""} ${field.deferred ? "field-deferred" : ""}`;
+  const usesGroupLabel = ["yesno", "table", "matrix"].includes(field.type);
 
   const label = (
     <div className="field-label-row">
-      <label htmlFor={id}>{field.label}</label>
-      <FieldBadges field={field} />
+      {usesGroupLabel ? <span className="field-legend">{field.label}</span> : <label htmlFor={id}>{field.label}</label>}
+      <div className="field-meta-actions">
+        <FieldBadges field={field} />
+        <FieldHelp field={field} helpId={describedBy} />
+      </div>
     </div>
   );
 
-  const help = field.help && <p className="field-help" id={describedBy}>{field.help}</p>;
   const mapping = mappingMode && field.mycaseTarget && (
     <div className="mapping-inline"><Database size={13} /> {field.mycaseTarget}</div>
   );
@@ -397,8 +512,8 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
   if (field.type === "yesno") {
     return (
       <div className={wrapperClass}>
-        {label}{help}
-        <div className="segmented-control" id={id} role="group" aria-label={field.label}>
+        {label}
+        <div className="segmented-control" id={id} role="group" aria-label={field.label} aria-describedby={describedBy}>
           {["Yes", "No"].map((option) => (
             <button key={option} type="button" className={value === option ? "selected" : ""} onClick={() => setValue(field.id, option)}>
               {value === option && <Check size={14} />} {option}
@@ -413,10 +528,12 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
   if (field.type === "checkboxes") {
     const checked = Array.isArray(value) ? value : [];
     return (
-      <fieldset className={wrapperClass}>
+      <fieldset className={wrapperClass} aria-describedby={describedBy}>
         <legend className="sr-only">{field.label}</legend>
-        <div className="field-label-row"><span className="field-legend">{field.label}</span><FieldBadges field={field} /></div>
-        {help}
+        <div className="field-label-row">
+          <span className="field-legend">{field.label}</span>
+          <div className="field-meta-actions"><FieldBadges field={field} /><FieldHelp field={field} helpId={describedBy} /></div>
+        </div>
         <div className="choice-grid">
           {field.options?.map((option) => {
             const isChecked = checked.includes(option);
@@ -442,12 +559,15 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
     const checked = value === true;
     return (
       <div className={wrapperClass}>
-        <label className={`acknowledgment-card ${checked ? "acknowledged" : ""}`} htmlFor={id}>
-          <input id={id} type="checkbox" checked={checked} onChange={(event) => setValue(field.id, event.target.checked)} />
-          <span className="checkbox-visual">{checked && <Check size={14} />}</span>
-          <span>{field.label}<FieldBadges field={field} /></span>
-        </label>
-        {help}{mapping}
+        <div className="acknowledgment-layout">
+          <label className={`acknowledgment-card ${checked ? "acknowledged" : ""}`} htmlFor={id}>
+            <input id={id} type="checkbox" checked={checked} onChange={(event) => setValue(field.id, event.target.checked)} aria-describedby={describedBy} />
+            <span className="checkbox-visual">{checked && <Check size={14} />}</span>
+            <span>{field.label}<FieldBadges field={field} /></span>
+          </label>
+          <FieldHelp field={field} helpId={describedBy} />
+        </div>
+        {mapping}
       </div>
     );
   }
@@ -456,7 +576,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
     const rowCount = tableRows[field.id] ?? field.initialRows ?? 2;
     return (
       <div className={wrapperClass}>
-        {label}{help}
+        {label}
         <div className="responsive-table">
           <table className="entry-table">
             <thead><tr>{field.columns?.map((column) => <th key={column}>{column}</th>)}</tr></thead>
@@ -473,6 +593,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
                           value={(values[cellId] as string) ?? ""}
                           onChange={(event) => setValue(cellId, event.target.value)}
                           placeholder={rowIndex === 0 ? column : ""}
+                          aria-describedby={describedBy}
                         />
                       </td>
                     );
@@ -491,7 +612,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
   if (field.type === "matrix") {
     return (
       <div className={wrapperClass}>
-        {label}{help}
+        {label}
         <div className="responsive-table">
           <table className="matrix-table">
             <thead><tr><th>Item</th>{field.columns?.map((column) => <th key={column}>{column}</th>)}</tr></thead>
@@ -504,7 +625,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
                     return (
                       <td key={column} data-label={column}>
                         <label className="sr-only" htmlFor={inputId(cellId)}>{`${row}, ${column}`}</label>
-                        <input id={inputId(cellId)} value={(values[cellId] as string) ?? ""} onChange={(event) => setValue(cellId, event.target.value)} />
+                        <input id={inputId(cellId)} value={(values[cellId] as string) ?? ""} onChange={(event) => setValue(cellId, event.target.value)} aria-describedby={describedBy} />
                       </td>
                     );
                   })}
@@ -522,13 +643,14 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
     const filenames = Array.isArray(value) ? value : [];
     return (
       <div className={wrapperClass}>
-        {label}{help}
+        {label}
         <label className="upload-zone" htmlFor={id}>
           <input
             id={id}
             type="file"
             multiple
             onChange={(event) => setValue(field.id, Array.from(event.target.files ?? []).map((file) => file.name))}
+            aria-describedby={describedBy}
           />
           <span className="upload-icon"><Upload size={22} /></span>
           <span><strong>Choose files for this mock</strong><small>Filenames stay in this browser session; file contents are not read.</small></span>
@@ -542,7 +664,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
   if (field.type === "textarea") {
     return (
       <div className={wrapperClass}>
-        {label}{help}
+        {label}
         <textarea
           id={id}
           value={(value as string) ?? ""}
@@ -560,7 +682,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
   if (field.type === "select") {
     return (
       <div className={wrapperClass}>
-        {label}{help}
+        {label}
         <select id={id} value={(value as string) ?? ""} onChange={(event) => setValue(field.id, event.target.value)} aria-describedby={describedBy} disabled={field.deferred}>
           <option value="">Select an option</option>
           {field.options?.map((option) => <option value={option} key={option}>{option}</option>)}
@@ -573,7 +695,7 @@ function FieldRenderer({ field, values, setValue, tableRows, addTableRow, invali
   const htmlType = field.type === "currency" ? "number" : field.type;
   return (
     <div className={wrapperClass}>
-      {label}{help}
+      {label}
       <div className={field.type === "currency" ? "currency-wrap" : ""}>
         {field.type === "currency" && <span>$</span>}
         <input
@@ -651,7 +773,7 @@ function FormWizard({ form, closeForm }: WizardProps) {
 
   const downloadPayload = () => {
     const payload = {
-      schemaVersion: "lewis-legal-intake-prototype-v0.1",
+      schemaVersion: "lewis-legal-intake-prototype-v0.2",
       prototype: true,
       formId: form.id,
       formTitle: form.title,
@@ -725,6 +847,17 @@ function FormWizard({ form, closeForm }: WizardProps) {
                 <span className="overline">{section.eyebrow}</span>
                 <h1>{section.title}</h1>
                 <p>{section.description}</p>
+              </div>
+              <div className="field-help-guide" role="note">
+                <CircleHelp size={19} aria-hidden="true" />
+                <div>
+                  <strong>Short explanations are available without crowding the form.</strong>
+                  <p>
+                    <span className="help-guide-desktop">Hover over or keyboard-focus the question-mark button beside any field.</span>
+                    <span className="help-guide-touch">Tap the question-mark button beside any field.</span>
+                    {" "}It explains what normally belongs there and when an estimate or “Unsure” is appropriate.
+                  </p>
+                </div>
               </div>
               {mappingMode && (
                 <div className="mapping-banner">

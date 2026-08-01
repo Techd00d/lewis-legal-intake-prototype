@@ -50,6 +50,7 @@ The build produces a fully static export in `out/`. Any normal static web server
 - `src/components/IntakePortal.tsx` — form library, wizard, review boundary, and sample JSON export
 - `src/types/intake.ts` — form-schema contracts
 - `src/app/globals.css` — responsive visual system and accessible interaction states
+- `docs/MILITARY_INTAKE_BASIS.md` — primary-source rationale and attorney-review boundary for military-family questions
 
 ## Deliberate safety choices
 
