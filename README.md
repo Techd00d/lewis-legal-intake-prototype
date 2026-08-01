@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lewis Legal intake modernization prototype
 
-## Getting Started
+Interactive, schema-driven mockup built from the eight legacy Lewis Legal PDF forms reviewed in July 2026.
 
-First, run the development server:
+This is a planning artifact, not a production intake service. It has no database, authentication, email, AI service, MyCase connection, analytics, or file-upload backend. Use synthetic information only. Form answers live only in React memory and disappear when the page is refreshed.
 
-```bash
+## Run locally
+
+From this directory:
+
+```powershell
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful direct prototype links:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `http://localhost:3000/?form=conflict-prescreen`
+- `http://localhost:3000/?form=general-intake`
+- `http://localhost:3000/?form=custody-support`
+- `http://localhost:3000/?form=dissolution`
+- `http://localhost:3000/?form=spousal-support-modification`
+- `http://localhost:3000/?form=privacy-communications`
+- `http://localhost:3000/?form=document-collection`
+- `http://localhost:3000/?form=internal-opening`
 
-## Learn More
+## Verify and export
 
-To learn more about Next.js, take a look at the following resources:
+```powershell
+npm run check
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The build produces a fully static export in `out/`. Any normal static web server can host that folder for a demonstration. Do not publish it as a real client intake until the production security, privacy, accessibility, retention, authentication, and integration controls described in the project review are implemented.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Structure
 
-## Deploy on Vercel
+- `src/data/forms.ts` — canonical form definitions, conditions, sensitivity flags, and proposed MyCase mappings
+- `src/components/IntakePortal.tsx` — form library, wizard, review boundary, and sample JSON export
+- `src/types/intake.ts` — form-schema contracts
+- `src/app/globals.css` — responsive visual system and accessible interaction states
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deliberate safety choices
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- A minimal conflict pre-screen precedes detailed intake.
+- Social Security and driver's-license numbers are represented as deferred protected fields, not active public inputs.
+- Safety questions route to staff and explicitly do not contact a court or emergency service.
+- The privacy module uses granular, revocable channel preferences instead of blanket voicemail authorization.
+- The support-modification module gathers the existing order and asserted changed circumstances without deciding legal sufficiency.
+- MyCase mappings are proposals; the prototype makes no API calls.
+- AI is limited to future staff-assistance roles and never communicates autonomously with a client.
