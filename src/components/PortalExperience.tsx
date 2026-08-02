@@ -138,7 +138,7 @@ export function PortalOverview({ setView }: ViewNavigationProps) {
       <section className="portal-hero">
         <div className="shell portal-hero-grid">
           <div className="portal-hero-copy">
-            <div className="eyebrow"><ShieldCheck size={17} /> Client forms portal concept · v0.3</div>
+            <div className="eyebrow"><ShieldCheck size={17} /> Client forms portal concept · v0.4</div>
             <h1>A secure front door for every requested form.</h1>
             <p className="portal-hero-lede">
               Staff selects the correct MyCase client and matter, assigns the right forms, and sends a protected access notice. Clients verify a new session, save continuously, and return from any device.
@@ -179,6 +179,12 @@ export function PortalOverview({ setView }: ViewNavigationProps) {
               </li>
             ))}
           </ol>
+          <div className="portal-boundary-note portal-stage-gate">
+            <CircleAlert size={19} />
+            <p>
+              <strong>Keep prospects and represented clients in separate states:</strong> a new inquiry should provide only the minimum information needed for a staff-run conflict pre-screen. Detailed matter forms and MyCase-linked access begin only after staff confirms the next step; the system never promotes a prospect automatically.
+            </p>
+          </div>
         </section>
 
         <section className="perspective-section" aria-labelledby="perspective-title">

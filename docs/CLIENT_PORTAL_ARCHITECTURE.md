@@ -8,10 +8,11 @@ This document is a design and attorney-review aid. It is not a legal opinion, a 
 
 ## Executive recommendation
 
-Build a narrow **Lewis Legal Forms Center** with two authenticated surfaces:
+Build a narrow **Lewis Legal Forms Center** with three controlled contexts:
 
 1. A staff workspace protected by Lewis Legal Microsoft Entra sign-in, MFA, Conditional Access, named accounts, and role-based permissions.
-2. A client workspace that exposes only forms assigned to a verified person for a specifically authorized MyCase matter.
+2. A prospective-client intake lane that collects only the minimum information approved for conflict screening, exposes no matter data, and does not imply that the firm has accepted an engagement.
+3. A represented-client workspace that exposes only forms assigned to a verified person for a specifically authorized MyCase matter.
 
 MyCase remains the authoritative source for client and case identity. The custom portal owns form templates and versions, assignments, identity bindings, verification challenges, server-side drafts, submitted snapshots, review status, and an independent audit trail.
 
@@ -28,6 +29,7 @@ This avoids rebuilding functions that MyCase already provides while solving the 
 - No client name, matter name, form title, or sensitive fact appears before successful authentication and authorization.
 - Identity is bound to a person; access is granted to a person–matter relationship. Access is never inferred merely because a person is a contact on a case.
 - Each adult, joint client, guardian, interpreter, or authorized representative receives a separate identity and explicit access grant. Credentials are not shared within a household.
+- A prospective inquiry and a represented-client portal account are different states. Only authorized staff may promote or associate an inquiry after the firm's conflict and engagement procedures; automation or AI may never make that decision.
 - Authentication, authorization, notifications, and MyCase writes are deterministic services. An AI model cannot grant access, choose recipients, send notifications, or select a matter.
 - Autosave preserves a draft. It does not constitute final submission, a signature, a legal instruction, or acceptance by the firm.
 - Submission creates an immutable, timestamped snapshot. A reopened form becomes a new revision.
@@ -93,6 +95,19 @@ The API does document operational records such as clients, cases, custom-field v
 The MyCase OAuth access and refresh tokens must never be exposed to the client browser or language model.
 
 ## Staff experience
+
+### Prospective-client boundary
+
+The detailed assignment workflow below is for a person and matter that staff has intentionally approved for that stage. A brand-new inquiry follows a separate, minimal lane:
+
+1. Collect only the contact, adverse-party, related-person, and matter-category information Heather approves as reasonably necessary for the conflict pre-screen.
+2. Label every screen and receipt so it does not promise representation or legal advice.
+3. Route the information to staff for the firm's documented conflict procedure. The software may find possible matches, but staff or Heather decides the result.
+4. Do not expose MyCase matter data, detailed forms, shared documents, messages, or billing.
+5. After the firm decides to proceed, authorized staff explicitly creates or associates the proper MyCase client and matter, records the person's role, and assigns the represented-client forms.
+6. Preserve the prospective-client record according to the attorney-approved confidentiality, retention, and deletion policy even if no engagement follows.
+
+California Rule of Professional Conduct 1.18 protects qualifying information learned from a prospective client even when no lawyer-client relationship follows. The purpose of this separation is data minimization and correct workflow state, not a determination that any particular inquiry does or does not create a prospective-client relationship.
 
 ### Default workflow
 
@@ -290,12 +305,13 @@ Before processing real information, Heather and counsel should approve:
 - Whether any form requires an electronic signature rather than an acknowledgment
 - Evidence preservation and metadata policy for future uploads
 
-California Rule of Professional Conduct 1.6 requires protection of client confidential information. The State Bar’s practical AI guidance also directs lawyers not to enter client confidential information into a generative AI solution without adequate confidentiality and security protections.
+California Rules of Professional Conduct 1.6 and 1.18 require careful protection of confidential client and prospective-client information. The State Bar's updated 2026 practical AI guidance says greater agent autonomy requires greater supervision and verification; it also warns against unrestricted agent access to firm systems and autonomous external transmission of client information without safeguards and human review.
 
 References:
 
 - [California Rule of Professional Conduct 1.6](https://www.calbar.ca.gov/index.php/legal-professionals/rules/rules-professional-conduct/current-rules-professional-conduct/chapter-1-lawyer-client-relationship)
-- [State Bar of California — Generative AI Practical Guidance](https://www.calbar.ca.gov/Portals/0/documents/ethics/Generative-AI-Practical-Guidance.pdf)
+- [California Rule of Professional Conduct 1.18](https://www.calbar.ca.gov/index.php/legal-professionals/rules/rules-professional-conduct/current-rules-professional-conduct/chapter-1-lawyer-client-relationship)
+- [State Bar of California — 2026 Generative AI Practical Guidance](https://www.calbar.ca.gov/Portals/0/documents/ethics/Generative-AI-Practical-Guidance.pdf)
 - [California Civil Code § 1798.82 — security breach notification](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.82)
 
 ## AI boundary
