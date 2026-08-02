@@ -275,7 +275,7 @@ export function StaffWorkspace() {
         client.id,
         client.maskedEmail,
         client.maskedPhone,
-        ...client.matters.flatMap((matter) => [
+        ...eligibleMatters.flatMap((matter) => [
           matter.name,
           matter.caseNumber,
           matter.practiceArea,
