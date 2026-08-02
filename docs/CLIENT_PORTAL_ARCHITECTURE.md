@@ -96,6 +96,25 @@ The MyCase OAuth access and refresh tokens must never be exposed to the client b
 
 ## Staff experience
 
+### Assignment UX pattern
+
+Use a four-step linear workflow: **Client → Matter and role → Forms → Delivery and review**.
+
+- Keep all four steps visible so staff always knows what is complete, current, and pending.
+- Show one active work area at a time. Completed steps compress into short summaries and remain available to edit.
+- Unlock the next step only after the current selection is explicitly confirmed.
+- If staff changes a client or matter, invalidate dependent confirmation and require the affected later steps to be reviewed again.
+- Do not slide completed work off screen or reduce it to low-contrast gray. The current step is most prominent, completed steps use a check and readable summary, and pending steps retain accessible contrast.
+- Use separate Back and Continue controls, an explicit “Step X of 4” heading, `aria-current="step"`, visible text statuses, keyboard-operable native buttons, and a polite status announcement when the active step changes.
+
+This follows the U.S. Web Design System recommendation for a linear, multi-step process. A task-list pattern was not selected because the GOV.UK Design System reserves task lists for work users may complete in an order of their choosing; this assignment has security-relevant dependencies and should stay sequential.
+
+References:
+
+- [U.S. Web Design System — Step indicator](https://designsystem.digital.gov/components/step-indicator/)
+- [GOV.UK Design System — Task list](https://design-system.service.gov.uk/components/task-list/)
+- [WAI-ARIA Authoring Practices — Accordion pattern](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/)
+
 ### Prospective-client boundary
 
 The detailed assignment workflow below is for a person and matter that staff has intentionally approved for that stage. A brand-new inquiry follows a separate, minimal lane:

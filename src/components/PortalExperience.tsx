@@ -265,8 +265,11 @@ export function StaffWorkspace() {
   ]);
   const [dueDate, setDueDate] = useState("2026-08-12");
   const [deliveryChannel, setDeliveryChannel] = useState<"email" | "sms">("email");
+  const [recipientRole, setRecipientRole] = useState("Client");
   const [confirmed, setConfirmed] = useState(false);
   const [inviteCreated, setInviteCreated] = useState(false);
+  const [activeStep, setActiveStep] = useState(1);
+  const [completedThrough, setCompletedThrough] = useState(0);
 
   const filteredClients = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -297,15 +300,60 @@ export function StaffWorkspace() {
     });
   }, [matterStatus, query, sortOrder]);
 
-  const selectedClient = filteredClients.find((client) => client.id === selectedClientId)
-    ?? filteredClients[0]
-    ?? portalDemoClients.find((client) => client.id === selectedClientId)
+  const selectedClient = portalDemoClients.find((client) => client.id === selectedClientId)
     ?? portalDemoClients[0];
+  const selectedClientIsVisible = filteredClients.some((client) => client.id === selectedClient.id);
   const eligibleSelectedMatters = selectedClient.matters.filter((matter) =>
     matterStatus === "all" ? true : matter.status === matterStatus,
   );
   const selectedMatter = eligibleSelectedMatters.find((matter) => matter.id === selectedMatterId)
     ?? newestMatter(eligibleSelectedMatters.length > 0 ? eligibleSelectedMatters : selectedClient.matters);
+
+  const resetAfterStep = (step: number) => {
+    setCompletedThrough((current) => Math.min(current, step - 1));
+    setConfirmed(false);
+    setInviteCreated(false);
+  };
+
+  const continueFromStep = (step: number) => {
+    setCompletedThrough((current) => Math.max(current, step));
+    setActiveStep(Math.min(step + 1, 4));
+  };
+
+  const workflowSteps = [
+    {
+      number: 1,
+      shortLabel: "Client",
+      title: "Find and confirm the client",
+      description: "Search the permitted MyCase directory and confirm the intended person.",
+      summary: `${selectedClient.name} · MyCase ${selectedClient.id.replace("mc-client-", "")}`,
+    },
+    {
+      number: 2,
+      shortLabel: "Matter",
+      title: "Confirm the matter and role",
+      description: "Choose the correct matter and record how this person is participating.",
+      summary: `${selectedMatter.caseNumber} · ${recipientRole}`,
+    },
+    {
+      number: 3,
+      shortLabel: "Forms",
+      title: "Choose the requested forms",
+      description: "Assign only the approved forms needed for this person and matter.",
+      summary: `${selectedForms.length} ${selectedForms.length === 1 ? "form" : "forms"} selected`,
+    },
+    {
+      number: 4,
+      shortLabel: "Delivery",
+      title: "Set delivery and review",
+      description: "Confirm the safe channel, requested date, and complete assignment summary.",
+      summary: inviteCreated
+        ? "Access preview created"
+        : `${deliveryChannel === "email" ? "Email" : "Text"} · due ${formatDate(dueDate)}`,
+    },
+  ];
+
+  const activeStepCopy = workflowSteps[activeStep - 1];
 
   const chooseClient = (clientId: string) => {
     const client = portalDemoClients.find((item) => item.id === clientId);
@@ -315,14 +363,12 @@ export function StaffWorkspace() {
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     setSelectedClientId(clientId);
     setSelectedMatterId((eligible[0] ?? newestMatter(client.matters)).id);
-    setConfirmed(false);
-    setInviteCreated(false);
+    resetAfterStep(1);
   };
 
   const chooseMatter = (matterId: string) => {
     setSelectedMatterId(matterId);
-    setConfirmed(false);
-    setInviteCreated(false);
+    resetAfterStep(2);
   };
 
   const toggleForm = (formId: string) => {
@@ -331,8 +377,7 @@ export function StaffWorkspace() {
         ? current.filter((id) => id !== formId)
         : [...current, formId],
     );
-    setConfirmed(false);
-    setInviteCreated(false);
+    resetAfterStep(3);
   };
 
   return (
@@ -340,7 +385,7 @@ export function StaffWorkspace() {
       <div className="portal-page-intro">
         <div className="section-kicker"><MonitorSmartphone size={17} /> Staff workspace · interactive mock</div>
         <h1>Assign the right forms to the right person and matter</h1>
-        <p>The production workspace would require Lewis Legal Microsoft sign-in, MFA, and role-based permissions. Every record shown here is synthetic.</p>
+        <p>Complete four steps in order. The active step stays in focus, completed steps remain available to edit, and future steps unlock only when the required choice is confirmed. Every record shown here is synthetic.</p>
       </div>
 
       <div className="workspace-status" role="status">
@@ -349,12 +394,66 @@ export function StaffWorkspace() {
         <span><RefreshCw size={14} /> Webhooks + scheduled reconciliation</span>
       </div>
 
-      <div className="staff-workspace-grid">
-        <section className="client-picker-panel" aria-labelledby="client-picker-title">
+      <p className="sr-only" role="status" aria-live="polite">
+        Step {activeStep} of 4: {activeStepCopy.title}
+      </p>
+
+      <div className="staff-workspace-grid guided-staff-workspace">
+        <aside className="staff-stepper-panel">
+          <div className="staff-stepper-intro">
+            <span className="overline">Assignment progress</span>
+            <strong>{completedThrough === 4 ? "Assignment ready" : `Step ${activeStep} of 4`}</strong>
+            <p>Finish the current step to unlock the next one. Select a completed step to review or edit it.</p>
+          </div>
+          <nav aria-label="Form assignment steps">
+            <ol className="staff-step-list">
+              {workflowSteps.map((step) => {
+                const isCurrent = step.number === activeStep;
+                const isComplete = step.number <= completedThrough;
+                const canOpen = step.number <= completedThrough + 1;
+                const stateClass = isCurrent ? "current" : isComplete ? "complete" : "pending";
+                const stateLabel = isCurrent && !isComplete
+                  ? "In progress"
+                  : isComplete
+                    ? "Complete"
+                    : step.number === completedThrough + 1
+                      ? "Up next"
+                      : "Waiting";
+
+                return (
+                  <li key={step.number} className={stateClass}>
+                    <button
+                      type="button"
+                      disabled={!canOpen}
+                      aria-current={isCurrent ? "step" : undefined}
+                      onClick={() => setActiveStep(step.number)}
+                    >
+                      <span className="staff-step-marker" aria-hidden="true">
+                        {isComplete ? <Check size={16} /> : step.number}
+                      </span>
+                      <span className="staff-step-copy">
+                        <strong>{step.shortLabel}</strong>
+                        <small>{canOpen ? step.summary : "Complete the previous step"}</small>
+                      </span>
+                      <span className="staff-step-state">{stateLabel}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+          <div className="staff-stepper-note">
+            <LockKeyhole size={16} />
+            <span>Changing the client or matter clears dependent confirmation so the wrong person cannot inherit an assignment.</span>
+          </div>
+        </aside>
+
+        <section className="client-picker-panel workflow-active-panel" aria-labelledby="client-picker-title" hidden={activeStep !== 1}>
           <div className="workspace-panel-head">
             <div>
-              <span className="step-chip">Step 1</span>
+              <span className="step-chip">Step 1 of 4</span>
               <h2 id="client-picker-title">Find a MyCase client</h2>
+              <p>Search by name, contact information, or matter number, then confirm the intended person.</p>
             </div>
             <span className="result-count">{filteredClients.length} matches</span>
           </div>
@@ -369,7 +468,7 @@ export function StaffWorkspace() {
                 <Filter size={15} /> Matter status
                 <select id="matter-status-filter" value={matterStatus} onChange={(event) => {
                   setMatterStatus(event.target.value as "open" | "closed" | "all");
-                  setInviteCreated(false);
+                  resetAfterStep(1);
                 }}>
                   <option value="open">Open matters</option>
                   <option value="closed">Closed matters</option>
@@ -411,17 +510,36 @@ export function StaffWorkspace() {
             )}
           </div>
           <p className="panel-footnote"><LockKeyhole size={14} /> Production results must be limited to records the signed-in staff member may access.</p>
+          <div className="workflow-step-footer">
+            <div>
+              <span>{selectedClientIsVisible ? "Selected client" : "Selection required"}</span>
+              <strong>{selectedClientIsVisible ? selectedClient.name : "Choose a visible search result"}</strong>
+              <small>{selectedClientIsVisible ? `MyCase ID ${selectedClient.id.replace("mc-client-", "")}` : "The previous selection is outside the current results."}</small>
+            </div>
+            <button className="button-primary" type="button" disabled={!selectedClientIsVisible} onClick={() => continueFromStep(1)}>
+              Continue to matter <ChevronRight size={18} />
+            </button>
+          </div>
         </section>
 
-        <section className="assignment-panel" aria-labelledby="assignment-title">
+        <section className="assignment-panel workflow-active-panel" aria-labelledby="assignment-title" hidden={activeStep === 1}>
           <div className="workspace-panel-head">
             <div>
-              <span className="step-chip">Steps 2–4</span>
-              <h2 id="assignment-title">Matter, forms, and delivery</h2>
+              <span className="step-chip">Step {activeStep} of 4</span>
+              <h2 id="assignment-title">{activeStepCopy.title}</h2>
+              <p>{activeStepCopy.description}</p>
             </div>
             <span className="synthetic-chip">Synthetic</span>
           </div>
 
+          <div className="workflow-context-strip" aria-label="Current assignment context">
+            <div><span>Client</span><strong>{selectedClient.name}</strong></div>
+            <div><span>Matter</span><strong>{selectedMatter.caseNumber}</strong></div>
+            <div><span>Recipient role</span><strong>{recipientRole}</strong></div>
+          </div>
+
+          {activeStep === 2 && (
+          <div className="workflow-step-section">
           <div className="selected-client-summary">
             <span className="client-avatar large" aria-hidden="true">{selectedClient.name.split(" ").map((part) => part[0]).join("")}</span>
             <div>
@@ -454,6 +572,30 @@ export function StaffWorkspace() {
             </div>
           </fieldset>
 
+          <label className="recipient-role-control" htmlFor="recipient-role">
+            <span><UserCheck size={16} /> Recipient role in this matter</span>
+            <select id="recipient-role" value={recipientRole} onChange={(event) => {
+              setRecipientRole(event.target.value);
+              resetAfterStep(2);
+            }}>
+              <option>Client</option>
+              <option>Joint client</option>
+              <option>Guardian or authorized representative</option>
+              <option>Interpreter or communication helper</option>
+            </select>
+          </label>
+
+          <div className="workflow-step-actions">
+            <button className="button-secondary" type="button" onClick={() => setActiveStep(1)}>Back to client</button>
+            <button className="button-primary" type="button" onClick={() => continueFromStep(2)}>
+              Continue to forms <ChevronRight size={18} />
+            </button>
+          </div>
+          </div>
+          )}
+
+          {activeStep === 3 && (
+          <div className="workflow-step-section">
           <fieldset className="form-assignment-group">
             <legend>Assign client-facing forms</legend>
             <p>Each assignment pins the approved template version so later edits cannot silently alter an active draft.</p>
@@ -472,14 +614,24 @@ export function StaffWorkspace() {
             </div>
           </fieldset>
 
+          <div className="workflow-step-actions">
+            <button className="button-secondary" type="button" onClick={() => setActiveStep(2)}>Back to matter</button>
+            <button className="button-primary" type="button" disabled={selectedForms.length === 0} onClick={() => continueFromStep(3)}>
+              Continue to delivery <ChevronRight size={18} />
+            </button>
+          </div>
+          </div>
+          )}
+
+          {activeStep === 4 && (
+          <div className="workflow-step-section">
           <fieldset className="delivery-group">
             <legend>Choose a verified, safe delivery channel</legend>
             <div className="delivery-options">
               <label className={deliveryChannel === "email" ? "delivery-option selected" : "delivery-option"}>
                 <input type="radio" name="delivery" value="email" checked={deliveryChannel === "email"} onChange={() => {
                   setDeliveryChannel("email");
-                  setConfirmed(false);
-                  setInviteCreated(false);
+                  resetAfterStep(4);
                 }} />
                 <Mail size={19} />
                 <span><strong>Email</strong><small>{selectedClient.maskedEmail}</small></span>
@@ -487,8 +639,7 @@ export function StaffWorkspace() {
               <label className={deliveryChannel === "sms" ? "delivery-option selected" : "delivery-option"}>
                 <input type="radio" name="delivery" value="sms" checked={deliveryChannel === "sms"} onChange={() => {
                   setDeliveryChannel("sms");
-                  setConfirmed(false);
-                  setInviteCreated(false);
+                  resetAfterStep(4);
                 }} />
                 <Phone size={19} />
                 <span><strong>Text message</strong><small>{selectedClient.maskedPhone}</small></span>
@@ -499,8 +650,7 @@ export function StaffWorkspace() {
               <span><CalendarDays size={16} /> Requested completion date</span>
               <input id="assignment-due-date" type="date" value={dueDate} onChange={(event) => {
                 setDueDate(event.target.value);
-                setConfirmed(false);
-                setInviteCreated(false);
+                resetAfterStep(4);
               }} />
             </label>
           </fieldset>
@@ -512,6 +662,7 @@ export function StaffWorkspace() {
             </div>
             <dl>
               <div><dt>Recipient</dt><dd>{selectedClient.name}</dd></div>
+              <div><dt>Recipient role</dt><dd>{recipientRole}</dd></div>
               <div><dt>Matter</dt><dd>{selectedMatter.name} · {selectedMatter.caseNumber}</dd></div>
               <div><dt>Forms</dt><dd>{selectedForms.length} selected</dd></div>
               <div><dt>Requested by</dt><dd>{formatDate(dueDate)}</dd></div>
@@ -520,13 +671,20 @@ export function StaffWorkspace() {
             </dl>
             <label className="confirmation-check">
               <input type="checkbox" checked={confirmed} onChange={(event) => {
+                resetAfterStep(4);
                 setConfirmed(event.target.checked);
-                setInviteCreated(false);
               }} />
               <span>I confirmed the client, matter, recipient role, and safe contact channel.</span>
             </label>
-            <button className="button-primary generate-button" disabled={!confirmed || selectedForms.length === 0} onClick={() => setInviteCreated(true)}>
-              <Send size={17} /> Generate access preview
+          </div>
+
+          <div className="workflow-step-actions">
+            <button className="button-secondary" type="button" onClick={() => setActiveStep(3)}>Back to forms</button>
+            <button className="button-primary" type="button" disabled={!confirmed || selectedForms.length === 0} onClick={() => {
+              setInviteCreated(true);
+              setCompletedThrough(4);
+            }}>
+              <Send size={17} /> Create secure access preview
             </button>
           </div>
 
@@ -541,6 +699,8 @@ export function StaffWorkspace() {
                 <small>The notification link is opaque, short-lived, revocable, and contains no client or matter name. It starts verification; it does not grant portal access by itself.</small>
               </div>
             </div>
+          )}
+          </div>
           )}
         </section>
       </div>
