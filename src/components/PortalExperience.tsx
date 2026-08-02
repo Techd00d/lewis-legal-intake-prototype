@@ -303,11 +303,8 @@ export function StaffWorkspace() {
   const selectedClient = portalDemoClients.find((client) => client.id === selectedClientId)
     ?? portalDemoClients[0];
   const selectedClientIsVisible = filteredClients.some((client) => client.id === selectedClient.id);
-  const eligibleSelectedMatters = selectedClient.matters.filter((matter) =>
-    matterStatus === "all" ? true : matter.status === matterStatus,
-  );
-  const selectedMatter = eligibleSelectedMatters.find((matter) => matter.id === selectedMatterId)
-    ?? newestMatter(eligibleSelectedMatters.length > 0 ? eligibleSelectedMatters : selectedClient.matters);
+  const selectedMatter = selectedClient.matters.find((matter) => matter.id === selectedMatterId)
+    ?? newestMatter(selectedClient.matters);
 
   const resetAfterStep = (step: number) => {
     setCompletedThrough((current) => Math.min(current, step - 1));
