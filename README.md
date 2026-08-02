@@ -12,6 +12,13 @@ Open the client-safe demonstration at:
 
 This public build is intentionally marked `noindex` and must only be used with synthetic information.
 
+Portal-planning views:
+
+- `?view=staff` — MyCase-backed client/matter picker and form-assignment mock
+- `?view=client` — verification and assigned-form dashboard mock
+- `?view=security` — trust boundaries, roles, threat controls, and API reality
+- `?view=forms` — complete working form library
+
 ## Run locally
 
 From this directory:
@@ -47,9 +54,12 @@ The build produces a fully static export in `out/`. Any normal static web server
 ## Structure
 
 - `src/data/forms.ts` — canonical form definitions, conditions, sensitivity flags, and proposed MyCase mappings
+- `src/data/portalDemo.ts` — synthetic clients, matters, assignments, portal states, and workshop questions
 - `src/components/IntakePortal.tsx` — form library, wizard, review boundary, and sample JSON export
+- `src/components/PortalExperience.tsx` — staff workspace, client verification/dashboard, and security architecture views
 - `src/types/intake.ts` — form-schema contracts
 - `src/app/globals.css` — responsive visual system and accessible interaction states
+- `docs/CLIENT_PORTAL_ARCHITECTURE.md` — product, identity, autosave, MyCase, privacy, and security baseline
 - `docs/MILITARY_INTAKE_BASIS.md` — primary-source rationale and attorney-review boundary for military-family questions
 
 ## Deliberate safety choices
@@ -61,3 +71,6 @@ The build produces a fully static export in `out/`. Any normal static web server
 - The support-modification module gathers the existing order and asserted changed circumstances without deciding legal sufficiency.
 - MyCase mappings are proposals; the prototype makes no API calls.
 - AI is limited to future staff-assistance roles and never communicates autonomously with a client.
+- A reusable portal URL is modeled only as an entry point; it is never treated as an authentication credential.
+- Autosave, identity verification, notification delivery, staff SSO, and MyCase synchronization are visibly marked as simulations.
+- The proposed production model stores drafts on an encrypted server with revision control; it does not rely on browser `localStorage`.

@@ -14,14 +14,12 @@ import {
   Download,
   FileScan,
   FileText,
-  FolderLock,
   Info,
   ListChecks,
   LockKeyhole,
   Plus,
   Scale,
   ShieldCheck,
-  Sparkles,
   Upload,
   UserCheck,
   Users,
@@ -31,19 +29,22 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  governancePrinciples,
   intakeForms,
   legacySourceMap,
-  processStages,
 } from "@/data/forms";
+import {
+  ClientPortalDemo,
+  PortalOverview,
+  SecurityArchitecture,
+  StaffWorkspace,
+  type PortalView,
+} from "@/components/PortalExperience";
 import type {
   FieldValue,
   IntakeField,
   IntakeFormDefinition,
   IntakeValues,
 } from "@/types/intake";
-
-type HomeView = "blueprint" | "sources" | "governance";
 
 const formIcons: Record<string, typeof FileText> = {
   "conflict-prescreen": ShieldCheck,
@@ -154,14 +155,8 @@ const getFieldHelp = (field: IntakeField) => {
 
 function LogoMark() {
   return (
-    <div className="brand" aria-label="Lewis Legal Group">
-      <div className="brand-mark" aria-hidden="true">
-        <span>LL</span>
-      </div>
-      <div className="brand-copy">
-        <span className="brand-name">Lewis Legal</span>
-        <span className="brand-subtitle">Family Law · California</span>
-      </div>
+    <div className="brand source-brand" aria-label="Lewis Legal Group APC">
+      <span className="source-brand-logo" aria-hidden="true" />
     </div>
   );
 }
@@ -171,61 +166,41 @@ function PrototypeBanner() {
     <div className="prototype-banner" role="status">
       <div className="shell prototype-inner">
         <span className="prototype-pill">Interactive prototype</span>
-        <span>Use synthetic information only. Nothing is saved, uploaded, or sent to MyCase.</span>
+        <span>Use synthetic information only. Verification, autosave, notifications, and MyCase access are simulated.</span>
       </div>
     </div>
   );
 }
 
-function HomeHeader({ view, setView }: { view: HomeView; setView: (view: HomeView) => void }) {
+function HomeHeader({ view, setView }: { view: PortalView; setView: (view: PortalView) => void }) {
   return (
     <header className="site-header">
       <div className="shell header-inner">
-        <LogoMark />
+        <button className="header-brand-button" onClick={() => setView("overview")} aria-label="Open portal plan overview">
+          <LogoMark />
+        </button>
         <nav className="header-nav" aria-label="Prototype sections">
-          <button className={view === "blueprint" ? "nav-active" : ""} onClick={() => setView("blueprint")}>
-            Blueprint
+          <button className={view === "overview" ? "nav-active" : ""} onClick={() => setView("overview")}>
+            Plan
           </button>
-          <button className={view === "sources" ? "nav-active" : ""} onClick={() => setView("sources")}>
-            Source audit
+          <button className={view === "staff" ? "nav-active" : ""} onClick={() => setView("staff")}>
+            Staff
           </button>
-          <button className={view === "governance" ? "nav-active" : ""} onClick={() => setView("governance")}>
-            Safeguards
+          <button className={view === "client" ? "nav-active" : ""} onClick={() => setView("client")}>
+            Client
+          </button>
+          <button className={view === "security" ? "nav-active" : ""} onClick={() => setView("security")}>
+            Security
+          </button>
+          <button className={view === "forms" || view === "sources" ? "nav-active" : ""} onClick={() => setView("forms")}>
+            Forms
           </button>
         </nav>
-        <a className="header-cta" href="#form-library">
-          Explore forms <ChevronRight size={16} aria-hidden="true" />
-        </a>
+        <button className="header-cta" onClick={() => setView("client")}>
+          Portal demo <ChevronRight size={16} aria-hidden="true" />
+        </button>
       </div>
     </header>
-  );
-}
-
-function WorkflowStrip() {
-  return (
-    <section className="workflow-section" aria-labelledby="workflow-title">
-      <div className="section-kicker"><Workflow size={16} /> Proposed operating model</div>
-      <div className="section-heading-row">
-        <div>
-          <h2 id="workflow-title">One safe path from inquiry to MyCase</h2>
-          <p>Each gate collects only what the next person or system actually needs.</p>
-        </div>
-        <div className="flow-legend">
-          <span><i className="legend-human" /> Human decision</span>
-          <span><i className="legend-system" /> System assist</span>
-        </div>
-      </div>
-      <div className="process-track">
-        {processStages.map((stage, index) => (
-          <div className={`process-step ${[1, 4].includes(index) ? "human-step" : "system-step"}`} key={stage.number}>
-            <span className="process-number">{stage.number}</span>
-            <h3>{stage.title}</h3>
-            <p>{stage.detail}</p>
-            {index < processStages.length - 1 && <ArrowRight className="process-arrow" size={17} aria-hidden="true" />}
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -272,6 +247,22 @@ function FormLibrary({ openForm }: { openForm: (formId: string) => void }) {
   );
 }
 
+function FormLibraryPage({ openForm, setView }: { openForm: (formId: string) => void; setView: (view: PortalView) => void }) {
+  return (
+    <main className="shell form-library-page">
+      <div className="portal-page-intro library-page-intro">
+        <div className="section-kicker"><Braces size={17} /> Existing form engine</div>
+        <h1>The form library remains reusable inside the secure portal</h1>
+        <p>These working mockups are the content layer. Assignment, identity, autosave, review status, and the MyCase handoff sit around them as separate services.</p>
+        <button className="button-secondary" onClick={() => setView("sources")}>
+          Review the legacy PDF source audit <ChevronRight size={16} />
+        </button>
+      </div>
+      <FormLibrary openForm={openForm} />
+    </main>
+  );
+}
+
 function SourceAudit() {
   return (
     <main className="shell content-page">
@@ -302,124 +293,6 @@ function SourceAudit() {
           <strong>Confirmed duplicate set</strong>
           <p>GENERAL INTAKE 2022 and GENERAL INTAKE 2024 have identical extracted content on both pages. GENERAL INTAKE LLG is the same first page.</p>
         </div>
-      </div>
-    </main>
-  );
-}
-
-function GovernanceView() {
-  return (
-    <main className="shell content-page">
-      <div className="page-intro compact-intro">
-        <div className="section-kicker"><ShieldCheck size={16} /> Human-led by design</div>
-        <h1>Guardrails are part of the workflow</h1>
-        <p>The system can remove clerical friction while preserving Heather&apos;s professional judgment and the staff&apos;s control of client communication.</p>
-      </div>
-      <div className="governance-grid">
-        <div className="governance-main">
-          <span className="overline">Operating principles</span>
-          {governancePrinciples.map((principle, index) => (
-            <div className="principle-row" key={principle}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <p>{principle}</p>
-            </div>
-          ))}
-        </div>
-        <aside className="control-stack">
-          <div className="control-card">
-            <FolderLock size={22} />
-            <h3>Information boundaries</h3>
-            <p>Conflict data, engaged-client facts, restricted safety notes, and files live in separate access zones.</p>
-          </div>
-          <div className="control-card">
-            <UserCheck size={22} />
-            <h3>Mandatory approvals</h3>
-            <p>Conflict outcome, legal conclusions, engagement, deadlines, client messages, MyCase conversion, and filings require a person.</p>
-          </div>
-          <div className="control-card">
-            <Database size={22} />
-            <h3>API reality</h3>
-            <p>The integration can write supported leads, contacts, and custom fields. It cannot remotely redesign MyCase native forms or workflows.</p>
-          </div>
-        </aside>
-      </div>
-      <div className="ai-boundary">
-        <div className="ai-boundary-icon"><Sparkles size={24} /></div>
-        <div>
-          <span className="overline">Appropriate AI role</span>
-          <h2>Draft, classify, compare, and flag—then stop for review.</h2>
-        </div>
-        <div className="boundary-list">
-          <span><Check size={15} /> Find missing answers</span>
-          <span><Check size={15} /> Suggest document categories</span>
-          <span><Check size={15} /> Prepare staff summaries</span>
-          <span className="boundary-no"><X size={15} /> No client advice</span>
-          <span className="boundary-no"><X size={15} /> No autonomous sending</span>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-function BlueprintHome({ openForm }: { openForm: (formId: string) => void }) {
-  return (
-    <main>
-      <section className="hero">
-        <div className="shell hero-grid">
-          <div className="hero-copy">
-            <div className="eyebrow"><ShieldCheck size={16} /> Intake modernization prototype · v0.2</div>
-            <h1>Less paperwork.<br /><em>More protected time.</em></h1>
-            <p className="hero-lede">A secure, staged family-law intake experience built from Lewis Legal&apos;s existing forms—and designed for a supervised future connection to MyCase.</p>
-            <div className="hero-actions">
-              <button className="button-primary" onClick={() => openForm("conflict-prescreen")}>
-                Try the first-contact flow <ArrowRight size={17} />
-              </button>
-              <a className="button-secondary" href="#form-library">See all modules</a>
-            </div>
-            <div className="trust-row">
-              <span><LockKeyhole size={15} /> Data minimization</span>
-              <span><UserCheck size={15} /> Human approval</span>
-              <span><Database size={15} /> MyCase-ready schema</span>
-            </div>
-          </div>
-          <div className="hero-panel" aria-label="Intake workflow overview">
-            <div className="panel-head">
-              <span>Prospective client journey</span>
-              <span className="status-live"><i /> Proposed</span>
-            </div>
-            <div className="journey-stack">
-              <div className="journey-item complete">
-                <span className="journey-icon"><Check size={16} /></span>
-                <div><strong>Names & safe contact</strong><small>Minimum conflict-check data</small></div>
-                <span className="journey-time">3 min</span>
-              </div>
-              <div className="journey-line" />
-              <div className="journey-item human">
-                <span className="journey-icon"><UserCheck size={16} /></span>
-                <div><strong>Staff conflict review</strong><small>Required human gate</small></div>
-                <span className="human-label">HUMAN</span>
-              </div>
-              <div className="journey-line" />
-              <div className="journey-item">
-                <span className="journey-icon"><FileText size={16} /></span>
-                <div><strong>Relevant intake modules</strong><small>Conditional, no duplicate questions</small></div>
-              </div>
-              <div className="journey-line" />
-              <div className="journey-item">
-                <span className="journey-icon"><Database size={16} /></span>
-                <div><strong>Reviewed MyCase write</strong><small>Supported fields only</small></div>
-              </div>
-            </div>
-            <div className="panel-foot">
-              <ShieldCheck size={17} />
-              <p><strong>Safety boundary:</strong> no form creates a lawyer-client relationship, gives advice, or contacts a court.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <div className="shell">
-        <WorkflowStrip />
-        <FormLibrary openForm={openForm} />
       </div>
     </main>
   );
@@ -945,26 +818,42 @@ function FormWizard({ form, closeForm }: WizardProps) {
 }
 
 export default function IntakePortal() {
-  const [homeView, setHomeView] = useState<HomeView>("blueprint");
+  const [homeView, setHomeView] = useState<PortalView>("overview");
   const [activeFormId, setActiveFormId] = useState<string | null>(null);
   const activeForm = intakeForms.find((form) => form.id === activeFormId);
 
   useEffect(() => {
-    const requestedForm = new URLSearchParams(window.location.search).get("form");
-    if (requestedForm && intakeForms.some((form) => form.id === requestedForm)) {
-      const timer = window.setTimeout(() => setActiveFormId(requestedForm), 0);
-      return () => window.clearTimeout(timer);
-    }
+    const params = new URLSearchParams(window.location.search);
+    const requestedForm = params.get("form");
+    const requestedView = params.get("view");
+    const validViews: PortalView[] = ["overview", "staff", "client", "security", "forms", "sources"];
+    const timer = window.setTimeout(() => {
+      if (requestedForm && intakeForms.some((form) => form.id === requestedForm)) {
+        setActiveFormId(requestedForm);
+      } else if (requestedView && validViews.includes(requestedView as PortalView)) {
+        setHomeView(requestedView as PortalView);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  const changeView = (view: PortalView) => {
+    setHomeView(view);
+    const nextUrl = view === "overview" ? window.location.pathname : `${window.location.pathname}?view=${encodeURIComponent(view)}`;
+    window.history.replaceState(null, "", nextUrl);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
 
   const openForm = (formId: string) => {
     setActiveFormId(formId);
-    window.history.replaceState(null, "", `?form=${encodeURIComponent(formId)}`);
+    window.history.replaceState(null, "", `${window.location.pathname}?form=${encodeURIComponent(formId)}`);
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const closeForm = () => {
     setActiveFormId(null);
-    window.history.replaceState(null, "", window.location.pathname);
+    const nextUrl = homeView === "overview" ? window.location.pathname : `${window.location.pathname}?view=${encodeURIComponent(homeView)}`;
+    window.history.replaceState(null, "", nextUrl);
   };
 
   if (activeForm) return <><PrototypeBanner /><FormWizard form={activeForm} closeForm={closeForm} /></>;
@@ -972,15 +861,18 @@ export default function IntakePortal() {
   return (
     <div className="site-app">
       <PrototypeBanner />
-      <HomeHeader view={homeView} setView={setHomeView} />
-      {homeView === "blueprint" && <BlueprintHome openForm={openForm} />}
+      <HomeHeader view={homeView} setView={changeView} />
+      {homeView === "overview" && <PortalOverview setView={changeView} />}
+      {homeView === "staff" && <StaffWorkspace />}
+      {homeView === "client" && <ClientPortalDemo openForm={openForm} />}
+      {homeView === "security" && <SecurityArchitecture />}
+      {homeView === "forms" && <FormLibraryPage openForm={openForm} setView={changeView} />}
       {homeView === "sources" && <SourceAudit />}
-      {homeView === "governance" && <GovernanceView />}
       <footer className="site-footer">
         <div className="shell footer-inner">
           <LogoMark />
           <p>Planning prototype for Lewis Legal Group · No client data · No legal advice · No live integrations</p>
-          <span>Prepared July 2026</span>
+          <span>Updated August 2026</span>
         </div>
       </footer>
     </div>

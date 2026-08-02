@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lewis Legal | Intake Modernization Prototype",
-  description: "Interactive planning prototype for a secure, staged Lewis Legal intake system.",
+  title: "Lewis Legal | Client Forms Portal Prototype",
+  description: "Interactive planning prototype for secure client form assignment, verification, autosave, and reviewed MyCase integration.",
   robots: {
     index: false,
     follow: false,
@@ -15,7 +15,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#102630",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
